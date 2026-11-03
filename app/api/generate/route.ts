@@ -15,7 +15,14 @@ export async function POST(request: Request) {
     const spaceId = process.env.HF_SPACE_ID;
     const apiName = process.env.HF_API_NAME;
     const inputsJson = process.env.HF_INPUTS_JSON || '["{{prompt}}"]';
-    const token = process.env.HF_TOKEN;
+    const token = process.env.HF_TOKEN?.trim();
+
+    if (token && !token.startsWith("hf_")) {
+      return NextResponse.json(
+        { error: "HF_TOKEN must be a valid Hugging Face token beginning with hf_." },
+        { status: 500 }
+      );
+    }
 
     if (!spaceId || !apiName) {
       return NextResponse.json(
@@ -29,7 +36,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "HF_INPUTS_JSON must be a JSON array." }, { status: 500 });
     }
     const resolvedInputs = inputs.map((value: unknown) => value === "{{prompt}}" ? prompt : value);
-    const client = await Client.connect(spaceId, token ? { hf_token: token } : {});
+    // @gradio/client types HF tokens as the template-literal type `hf_${string}`.
+    const clientOptions = token ? { hf_token: token as `hf_${string}` } : {};
+    const client = await Client.connect(spaceId, clientOptions);
     const result = await client.predict(apiName, resolvedInputs);
 
     const findVideoUrl = (value: unknown): string | undefined => {
