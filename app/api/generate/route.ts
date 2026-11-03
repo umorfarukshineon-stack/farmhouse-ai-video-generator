@@ -79,7 +79,20 @@ export async function POST(request: Request) {
     }
     return NextResponse.json({ videoUrl });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown generation error";
+    console.error("Video generation request failed:", error);
+    let message = "Video generation failed. Please try again.";
+    if (error instanceof Error && error.message) {
+      message = error.message;
+    } else if (typeof error === "string" && error.trim()) {
+      message = error;
+    } else if (error && typeof error === "object") {
+      const details = error as Record<string, unknown>;
+      const candidate = details.message ?? details.detail ?? details.error;
+      if (typeof candidate === "string" && candidate.trim()) message = candidate;
+      else {
+        try { message = JSON.stringify(error); } catch { /* keep fallback message */ }
+      }
+    }
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
