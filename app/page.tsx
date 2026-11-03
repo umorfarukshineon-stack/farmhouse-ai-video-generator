@@ -4,7 +4,7 @@ import { FormEvent, useState } from "react";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
-  const [duration, setDuration] = useState<15 | 30>(15);
+  const [duration, setDuration] = useState<5 | 10 | 14>(14);
   const [loading, setLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
   const [error, setError] = useState("");
@@ -41,9 +41,10 @@ export default function Home() {
           <label htmlFor="prompt">Describe your video</label>
           <textarea id="prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} required minLength={5} placeholder="A cozy American farmhouse kitchen with warm sunlight, cream cabinets, rustic wooden countertops and fresh flowers..." />
           <label htmlFor="duration">Video duration</label>
-          <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value) as 15 | 30)}>
-            <option value={15}>15 seconds</option>
-            <option value={30}>30 seconds</option>
+          <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value) as 5 | 10 | 14)}>
+            <option value={5}>5 seconds</option>
+            <option value={10}>10 seconds</option>
+            <option value={14}>14 seconds (maximum)</option>
           </select>
           <p className="footnote">Video format: 9:16 vertical (Reels / TikTok)</p>
           <button disabled={loading || prompt.trim().length < 5}>{loading ? "Generating video..." : "Generate video"}</button>
@@ -51,7 +52,7 @@ export default function Home() {
         {loading && <p className="notice">Your {duration}-second video request has been sent to the video model. Generation may take a few minutes.</p>}
         {error && <p className="error" role="alert">{error}</p>}
         {videoUrl && <section className="result"><h2>Your video</h2><video controls playsInline src={videoUrl} /><a href={videoUrl} target="_blank" rel="noreferrer">Open or download video</a></section>}
-        <p className="footnote">Video generation requires a compatible Hugging Face Gradio Space configured in the server environment. Available duration depends on the model's limits.</p>
+        <p className="footnote">Video generation requires a compatible Hugging Face Gradio Space configured in the server environment. This model supports 2–14 seconds per generated clip. 30-second videos are not supported by this model.</p>
       </section>
     </main>
   );
