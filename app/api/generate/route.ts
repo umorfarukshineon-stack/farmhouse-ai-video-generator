@@ -8,12 +8,12 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const prompt = typeof body.prompt === "string" ? body.prompt.trim() : "";
-    const duration = Number(body.duration ?? 15);
+    const duration = Number(body.duration ?? 14);
     if (prompt.length < 5) {
       return NextResponse.json({ error: "Please enter a more detailed prompt." }, { status: 400 });
     }
-    if (![15, 30].includes(duration)) {
-      return NextResponse.json({ error: "Choose a video duration of 15 or 30 seconds." }, { status: 400 });
+    if (![5, 10, 14].includes(duration)) {
+      return NextResponse.json({ error: "Choose a video duration of 5, 10, or 14 seconds. The model maximum is 14 seconds." }, { status: 400 });
     }
 
     const spaceId = process.env.HF_SPACE_ID;
