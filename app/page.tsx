@@ -1,59 +1,63 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
+type Provider = { id: string; name: string };
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [duration, setDuration] = useState<5 | 10 | 14>(14);
+  const [provider, setProvider] = useState("auto");
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
+  const [usedProvider, setUsedProvider] = useState("");
   const [error, setError] = useState("");
+  useEffect(() => {
+    fetch("/api/generate").then(r => r.json()).then(d => setProviders(d.providers || [])).catch(() => {});
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setLoading(true);
-    setError("");
-    setVideoUrl("");
+    setLoading(true); setError(""); setVideoUrl(""); setUsedProvider("");
     try {
       const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, duration }),
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, duration, provider }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Video generation failed.");
       setVideoUrl(data.videoUrl || data.url || "");
+      setUsedProvider(data.providerName || "AI provider");
       if (!data.videoUrl && !data.url) throw new Error("The model did not return a video URL.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   }
 
   return (
-    <main className="shell">
-      <section className="hero">
-        <p className="eyebrow">AI CREATIVE STUDIO</p>
-        <h1>Farmhouse AI Video Generator</h1>
-        <p className="intro">Turn your ideas into warm, cozy farmhouse-inspired videos.</p>
-        <form onSubmit={handleSubmit} className="generator">
-          <label htmlFor="prompt">Describe your video</label>
-          <textarea id="prompt" value={prompt} onChange={(e) => setPrompt(e.target.value)} required minLength={5} placeholder="A cozy American farmhouse kitchen with warm sunlight, cream cabinets, rustic wooden countertops and fresh flowers..." />
-          <label htmlFor="duration">Video duration</label>
-          <select id="duration" value={duration} onChange={(e) => setDuration(Number(e.target.value) as 5 | 10 | 14)}>
-            <option value={5}>5 seconds</option>
-            <option value={10}>10 seconds</option>
-            <option value={14}>14 seconds (maximum)</option>
-          </select>
-          <p className="footnote">Video format: 9:16 vertical (Reels / TikTok)</p>
-          <button disabled={loading || prompt.trim().length < 5}>{loading ? "Generating video..." : "Generate video"}</button>
-        </form>
-        {loading && <p className="notice">Your {duration}-second video request has been sent to the video model. Generation may take a few minutes.</p>}
-        {error && <p className="error" role="alert">{error}</p>}
-        {videoUrl && <section className="result"><h2>Your video</h2><video controls playsInline src={videoUrl} /><a href={videoUrl} target="_blank" rel="noreferrer">Open or download video</a></section>}
-        <p className="footnote">Video generation requires a compatible Hugging Face Gradio Space configured in the server environment. This model supports 2–14 seconds per generated clip. 30-second videos are not supported by this model.</p>
-      </section>
-    </main>
+    <main className="shell"><section className="hero">
+      <p className="eyebrow">AI CREATIVE STUDIO</p>
+      <h1>Farmhouse AI Video Generator</h1>
+      <p className="intro">Turn your ideas into warm, cozy farmhouse-inspired videos.</p>
+      <form onSubmit={handleSubmit} className="generator">
+        <label htmlFor="prompt">Describe your video</label>
+        <textarea id="prompt" value={prompt} onChange={e => setPrompt(e.target.value)} required minLength={5} placeholder="A cozy American farmhouse kitchen with warm sunlight, cream cabinets, rustic wooden countertops and fresh flowers..." />
+        <label htmlFor="provider">AI provider</label>
+        <select id="provider" value={provider} onChange={e => setProvider(e.target.value)}>
+          <option value="auto">Auto — try providers in order</option>
+          {providers.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+        <label htmlFor="duration">Video duration</label>
+        <select id="duration" value={duration} onChange={e => setDuration(Number(e.target.value) as 5 | 10 | 14)}>
+          <option value={5}>5 seconds</option><option value={10}>10 seconds</option><option value={14}>14 seconds (maximum per clip)</option>
+        </select>
+        <p className="footnote">9:16 vertical · Reels / TikTok · No-watermark output depends on the selected model.</p>
+        <button disabled={loading || prompt.trim().length < 5}>{loading ? "Generating video..." : "Generate video"}</button>
+      </form>
+      {loading && <p className="notice">Your request is processing. Auto mode will try the next configured provider if one fails.</p>}
+      {error && <p className="error" role="alert">{error}</p>}
+      {videoUrl && <section className="result"><h2>Your video</h2><p className="footnote">Generated with: {usedProvider}</p><video controls playsInline src={videoUrl} /><a href={videoUrl} target="_blank" rel="noreferrer">Open or download video</a></section>}
+      <p className="footnote">This version supports clips up to 14 seconds. 30-second clip stitching is not enabled yet. Add a second provider in Render environment variables to activate fallback; adding another Hugging Face Space may still share Hugging Face account quota.</p>
+    </section></main>
   );
 }
