@@ -50,3 +50,37 @@ A free shared video Space may take several minutes. Avoid short-timeout serverle
 - The returned preview/download URL is provided by the Space and may expire. For durable storage, add private object storage (e.g. S3/R2) and copy the generated file server-side.
 - Add authentication, per-user rate limits, and abuse protection before making the site public.
 - For public-facing use, review the selected Space's license, terms, and output rights.
+
+
+## Multi-provider fallback
+
+The app now supports a provider selector and Auto fallback. Keep provider credentials on the server in Render environment variables; never put API tokens in frontend code or commit them to Git.
+
+For one or more Hugging Face Gradio Spaces, set `HF_PROVIDERS_JSON` to a JSON array. Each entry needs a unique `id`, display `name`, `spaceId`, exact Gradio `apiName`, and `inputsJson` matching that Space's API schema. Optional `tokenEnv` names the Render environment variable containing that provider's Hugging Face token (defaults to `HF_TOKEN`).
+
+Example (replace the second Space with a real, tested endpoint before relying on it):
+
+```json
+[
+  {
+    "id": "hf-primary",
+    "name": "Hugging Face — Primary",
+    "spaceId": "innoai/minimax-h3-flashgen-4step",
+    "apiName": "/generate",
+    "inputsJson": "[\\"{{prompt}}\\",null,null,\\"544x960 · 9:16 fast\\",5,42,false]",
+    "tokenEnv": "HF_TOKEN"
+  },
+  {
+    "id": "hf-backup",
+    "name": "Hugging Face — Backup",
+    "spaceId": "YOUR_TESTED_BACKUP_SPACE",
+    "apiName": "/generate",
+    "inputsJson": "[\\"{{prompt}}\\",null,null,\\"544x960 · 9:16 fast\\",5,42,false]",
+    "tokenEnv": "HF_BACKUP_TOKEN"
+  }
+]
+```
+
+Auto mode tries configured entries in order and reports quota/rate-limit failures clearly. A second Space is not guaranteed to provide an independent quota: Hugging Face account-level ZeroGPU limits may still apply. Do not add a backup Space until its API schema and watermark policy have been tested. This integration currently supports Gradio/Hugging Face Spaces with compatible input schemas; it is not yet a universal adapter for unrelated video API providers.
+
+The current model supports 2–14 seconds per generation. 30-second stitching is not implemented in this release; it needs a media-stitching worker and should be added only after provider generation and file retrieval have been tested end-to-end.
