@@ -84,3 +84,16 @@ Example (replace the second Space with a real, tested endpoint before relying on
 Auto mode tries configured entries in order and reports quota/rate-limit failures clearly. A second Space is not guaranteed to provide an independent quota: Hugging Face account-level ZeroGPU limits may still apply. Do not add a backup Space until its API schema and watermark policy have been tested. This integration currently supports Gradio/Hugging Face Spaces with compatible input schemas; it is not yet a universal adapter for unrelated video API providers.
 
 The current model supports 2–14 seconds per generation. 30-second stitching is not implemented in this release; it needs a media-stitching worker and should be added only after provider generation and file retrieval have been tested end-to-end.
+
+
+## Free.ai CogVideoX backup provider
+
+The API route can use Free.ai's self-hosted CogVideoX-2B endpoint as a free-tier backup. It only appears in the provider selector when `FREEAI_API_KEY` is configured. The integration requests the self-hosted model slug `cogvideox-2b` (not a premium model), asks for portrait 9:16 output, and rejects clips longer than 6 seconds. Auto mode tries Hugging Face first, then Free.ai for requests up to 6 seconds.
+
+To connect it:
+1. Create a Free.ai account and check its current free daily token allowance and API access at https://free.ai/api/ and https://free.ai/models/cogvideox-2b/.
+2. Create/copy an API key if the account dashboard offers one. Do not buy tokens or select premium models.
+3. In Render → your service → Environment, add `FREEAI_API_KEY` with the key as its value. Keep it secret; never put it in GitHub or frontend code.
+4. Save changes and let Render redeploy. The provider selector should then show Free.ai.
+
+Important: Free.ai's public pages describe a free daily allowance but the API documentation also mentions token balances and paid top-ups. Verify that your account has free tokens before generating. This app does not buy tokens or invoke premium models. Free.ai's public docs describe short CogVideoX clips and no watermark, but exact API availability and limits can change. The 30-second stitcher is still not implemented.
