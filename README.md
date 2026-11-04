@@ -86,14 +86,6 @@ Auto mode tries configured entries in order and reports quota/rate-limit failure
 The current model supports 2–14 seconds per generation. 30-second stitching is not implemented in this release; it needs a media-stitching worker and should be added only after provider generation and file retrieval have been tested end-to-end.
 
 
-## Free.ai CogVideoX backup provider
+## Free-only policy
 
-The API route can use Free.ai's self-hosted CogVideoX-2B endpoint as a free-tier backup. It only appears in the provider selector when `FREEAI_API_KEY` is configured. The integration requests the self-hosted model slug `cogvideox-2b` (not a premium model), asks for portrait 9:16 output, and rejects clips longer than 6 seconds. Auto mode tries Hugging Face first, then Free.ai for requests up to 6 seconds.
-
-To connect it:
-1. Create a Free.ai account and check its current free daily token allowance and API access at https://free.ai/api/ and https://free.ai/models/cogvideox-2b/.
-2. Create/copy an API key if the account dashboard offers one. Do not buy tokens or select premium models.
-3. In Render → your service → Environment, add `FREEAI_API_KEY` with the key as its value. Keep it secret; never put it in GitHub or frontend code.
-4. Save changes and let Render redeploy. The provider selector should then show Free.ai.
-
-Important: Free.ai's public pages describe a free daily allowance but the API documentation also mentions token balances and paid top-ups. Verify that your account has free tokens before generating. This app does not buy tokens or invoke premium models. Free.ai's public docs describe short CogVideoX clips and no watermark, but exact API availability and limits can change. The 30-second stitcher is still not implemented.
+This app intentionally uses Hugging Face public Gradio Spaces only. Free.ai and other token-purchase or paid API integrations are not enabled. The app will not purchase tokens, charge a payment method, or automatically switch to a paid provider. If all configured free Spaces are unavailable or their quotas are exhausted, generation stops and displays an error. Add only tested public Hugging Face Spaces to `HF_PROVIDERS_JSON`; multiple Spaces may still share account-level ZeroGPU quotas.
