@@ -36,14 +36,14 @@ export default function Home() {
       </select>
       <label htmlFor="duration">Video duration</label>
       <select id="duration" value={duration} onChange={e => setDuration(Number(e.target.value) as 3 | 5 | 10 | 14)}>
-        <option value={3}>3 seconds (Free.ai compatible)</option><option value={5}>5 seconds</option><option value={10}>10 seconds (Hugging Face)</option><option value={14}>14 seconds (Hugging Face maximum)</option>
+        <option value={3}>3 seconds</option><option value={5}>5 seconds</option><option value={10}>10 seconds (Hugging Face)</option><option value={14}>14 seconds (Hugging Face maximum)</option>
       </select>
-      <p className="footnote">9:16 vertical · Reels / TikTok. Free.ai backup supports short clips up to 6 seconds; longer requests use compatible providers only.</p>
+      <p className="footnote">9:16 vertical · Reels / TikTok. Only configured free Hugging Face Spaces are used. No paid API fallback.</p>
       <button disabled={loading || prompt.trim().length < 5}>{loading ? "Generating video..." : "Generate video"}</button>
     </form>
     {loading && <p className="notice">Your request is processing. Auto mode will try the next configured provider if one fails.</p>}
     {error && <p className="error" role="alert">{error}</p>}
     {videoUrl && <section className="result"><h2>Your video</h2><p className="footnote">Generated with: {usedProvider}</p><video controls playsInline src={videoUrl} /><a href={videoUrl} target="_blank" rel="noreferrer">Open or download video</a></section>}
-    <p className="footnote">30-second stitching is not enabled yet. Free.ai usage is limited by its daily token allowance; this integration does not use paid models or purchase tokens.</p>
+    <p className="footnote">30-second stitching is not enabled yet. This app uses free Hugging Face Spaces only; it will never switch to a paid API automatically.</p>
   </section></main>;
 }
